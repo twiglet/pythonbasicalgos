@@ -28,6 +28,15 @@ class Graph:
         ret = ret + "}"
         return ret
 
+def mk_undirected(g):
+    new_edges = []
+    for (v,es) in g.vertices.iteritems():
+        for (y,w) in es:
+            new_edges.append((y,v,w))
+    for (x,y,w) in new_edges:
+        g.add_edge(x,y,w)
+
+
 if __name__ == '__main__':
     edge_count = 10
     # List of vertices from A .. H
@@ -39,4 +48,6 @@ if __name__ == '__main__':
     for (x,y,w) in edges:
         if x != y:
             g.add_edge(x,y,w)
+    print g
+    mk_undirected(g)
     print g
