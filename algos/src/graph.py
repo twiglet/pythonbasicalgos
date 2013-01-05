@@ -3,81 +3,40 @@ Created on Dec 30, 2012
 
 @author: keving
 '''
-import random
+from random import randrange
 
-def basic_comp(a,b):
-    if a > b:
-        return 1
-    elif a == b:
-        return 0
-    else:
-        return -1     
 
+## We store a graph by an adjacency list
+## Its a dictionary from vertices to a list of arcs, each arc is a tuple of end and weight 
 class Graph:
     def __init__(self):
         self.vertices = {}
     def add_edge(self, x, y, w):
-            
-        
-    def __str__(self):
-        return self.vertices.__str__()
-
-class Node:
-    def __init__(self, value, l=None, r=None):
-        self.left = l
-        self.right = r
-        self.payload = value
-        
-    def __str__(self):
-        return "%s: ( %s %s )" % (self.payload, self.left, self.right)
-   
-
-def bst_insert(bst, v):
-    ## pre: node is a BST Node
-    ## post: v is inserted into node, respecting BST
-    def insert(node):
-        if bst.comp(v,node.payload) >= 0:
-            if node.right == None:
-                node.right = Node(v)
-            else:
-                insert(node.right)
-        else:
-            if node.left == None:
-                node.left = Node(v)
-            else:
-                insert(node.left)
-
-    if bst.tree == None:
-        bst.tree = Node(v)
-    else:
-        insert(bst.tree)
- 
- 
-def in_order(t, f):
-    def _inorder(node):
-        if node == None:
+        ## Ignore this edge if we already have an edge from x to y
+        if y in [a for (a,_) in self.vertices.get(x, [])]:
             return
-        else:
-            _inorder(node.left)
-            f(node.payload)
-            _inorder(node.right)
-    
-    _inorder(t.tree) 
+        ## If first edge to y then create an empty list of edges from x
+        if not self.vertices.has_key(x):
+            self.vertices[x] = []
 
-def pprint(x):
-    print x
-    
+        self.vertices[x].append((y,w,))
+ 
+    def __str__(self):
+        ret = "{\n"
+        for v,e in self.vertices.iteritems():
+            ret = ret + "  %s: %s\n" % (v, e)
+        ret = ret + "}"
+        return ret
+
 if __name__ == '__main__':
-    size = 10
-    xs = [random.randrange(0,size) for i in range(size)]
-    tree = Tree()
-    for x in xs:
-        bst_insert(tree, x)
-   
-    in_order(tree, pprint)
-        
-
+    edge_count = 10
+    # List of vertices from A .. H
+    vertices = [chr(i) for i in range(ord('A'),ord('H')+1)]
+    vertices_count = len(vertices)
+    edges = [(vertices[randrange(vertices_count)],vertices[randrange(vertices_count)], randrange(10*edge_count)) for i in range((edge_count**2) / 4)]
     
-    
-   # for i,v in enumerate(arr):
-    #    print i, v
+    g = Graph()
+    for (x,y,w) in edges:
+        if x != y:
+            g.add_edge(x,y,w)
+    print g
