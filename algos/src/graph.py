@@ -3,7 +3,7 @@ Created on Dec 30, 2012
 
 @author: keving
 '''
-from random import randrange
+from random import randrange, seed
 
 
 ## We store a graph by an adjacency list
@@ -38,6 +38,10 @@ def mk_undirected(g):
 
 
 if __name__ == '__main__':
+    
+    ## Comment for random graphs
+    seed("Initial Seed")
+    
     edge_count = 10
     # List of vertices from A .. H
     vertices = [chr(i) for i in range(ord('A'),ord('H')+1)]
