@@ -8,13 +8,13 @@ Algorithms follow those in Skiena's The Algorithm Design Manual, 2nd Ed
 from random import randrange, seed
 from collections import deque
 
-## Holder for an int so that we can pass by reference
-class CounterRef:
-    def __init__(self, initv = 0):
+## General Purpose holder so that we can pass by reference
+class Ref:
+    def __init__(self, initv):
         self.value = initv
-        
-    def inc(self, incv = 1):
-        self.value += incv
+    
+    def apply(self, f):
+        self.value = f(self.value)
         
     def get(self):
         return self.value
@@ -76,7 +76,10 @@ def mk_undirected(g):
     for (x,y,w) in new_edges:
         g.add_edge(x,y,w)
 
-def bfs(g,s, parent = {}, enter_node_f = None, exit_node_f = None, edge_f = None):
+def bfs(g,s, parent = None, enter_node_f = None, exit_node_f = None, edge_f = None):
+    
+    if parent == None:
+        parent = {}
     ## has node v been seen?
     found = {}
     # has node v been fully processed?
@@ -84,8 +87,8 @@ def bfs(g,s, parent = {}, enter_node_f = None, exit_node_f = None, edge_f = None
     for v in g.vertices.keys():
         found[v] = False
         processed[v] = False
-    ## Stores order we discovered nodes  
 
+    ## Stores order we discovered nodes  
     # Put initial node on work queue
     workq = deque([s])
     found[s] = True
@@ -106,11 +109,19 @@ def bfs(g,s, parent = {}, enter_node_f = None, exit_node_f = None, edge_f = None
         if exit_node_f != None:
             exit_node_f(x)
 
-def dfs(g, s, parent = {}, found = {}, entry_time = {}, exit_time = {}, enter_node_f = None, exit_node_f = None, edge_f = None):
+def dfs(g, s, parent = None, found = None, discovered = None, finished = None,
+        entry_time = None, exit_time = None, 
+        enter_node_f = None, exit_node_f = None, edge_f = None):
 
-    def _dfs(x, time, processed):
+    def _dfs(x, time, processed, parent):
+        
+        ## Set finished to terminate early
+        if finished.get():
+            return
+        
         entry_time[x] = time.get()
-        time.inc(1)
+        
+        time.apply(lambda v: v+1)
     
         if enter_node_f != None:
             enter_node_f(x)
@@ -119,27 +130,39 @@ def dfs(g, s, parent = {}, found = {}, entry_time = {}, exit_time = {}, enter_no
      
         for (y,w) in g.vertices[x]:
             if not found.get(y, False):
-                # Tree edge
+                # Never seen before, Tree edge
                 parent[y] = x
                 if edge_f != None:
                     edge_f(x,y,w)
-                _dfs(y, time, processed)
-            elif not processed.get(y, False):
+                _dfs(y, time, processed, parent)
+            elif not processed.get(y, False) and not parent.get(x, None) == y:
+                # back link
                 if edge_f != None:
                     edge_f(x,y,w)
-
+            if finished.get():
+                return
         if exit_node_f != None:
             exit_node_f(x)
 
         exit_time[x] = time.get()
-        time.inc(1)
+        time.apply(lambda v: v+1)
         
         processed[x] = True
-    
+        
+    if parent == None:
+        parent = {}
+    if found == None:
+        found = {}
+    if entry_time == None:
+        entry_time = {}
+    if exit_time == None:
+        exit_time = {}
+    if finished == None:
+        finished = Ref(False)
     # global counter to mark times we first enter and exit nodes
-    time = CounterRef(0)
+    time = Ref(0)
     processed = {}
-    _dfs(s, time, processed)
+    _dfs(s, time, processed, parent)
                 
                 
 def print_path(parent, start, end):
@@ -167,15 +190,30 @@ if __name__ == '__main__':
         if x != y:
             g.add_edge(x,y,w)
     mk_undirected(g)
+    print "Our Graph"
     print g
+    
+    print "BFS"
     parent_reln = {}
     bfs(g, 'A', parent=parent_reln, edge_f = pprint)
     print_path(parent_reln, 'A', 'D')
     
+    print "DFS"
     parent_reln = {}
     entry_time_map = {} 
     exit_time_map = {}
     dfs(g, 'A', parent=parent_reln, entry_time = entry_time_map, exit_time = exit_time_map, edge_f = pprint)
     print_path(parent_reln, 'A', 'B')
-    print entry_time_map
-    print exit_time_map
+    
+    # print cycles
+    print "Find Cycles"
+    parent_reln = {}
+    found_map = {}
+    finished_ref = Ref(False)
+    def print_cycle(x,y,w):
+        if found_map.get(y, False) and parent_reln.get(y, None) != x:
+            print "cycle", y, x
+            print_path(parent_reln, y, x)
+            finished_ref.apply(lambda _:True)
+            
+    dfs(g, 'A', parent = parent_reln, found = found_map, finished = finished_ref, edge_f = print_cycle)
