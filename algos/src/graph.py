@@ -102,7 +102,7 @@ def bfs(g,s, parent = None, enter_node_f = None, exit_node_f = None, edge_f = No
         if enter_node_f != None:
             enter_node_f(x) 
         for (y,w) in g.vertices[x]:
-            if not processed[y]:
+            if g.directed or not processed[y]:
                 if edge_f != None:
                     edge_f(x,y,w)
             if not found[y]:
@@ -192,7 +192,7 @@ if __name__ == '__main__':
     for (x,y,w) in edges:
         if x != y:
             g.add_edge(x,y,w)
-    g.mk_undirected()
+    # g.mk_undirected()
     print "Our Graph"
     print g
     
@@ -217,6 +217,6 @@ if __name__ == '__main__':
         if found_map.get(y, False) and parent_reln.get(y, None) != x:
             print "cycle", y, x
             print_path(parent_reln, y, x)
-            finished_ref.apply(lambda _:True)
+            # finished_ref.apply(lambda _:True)
             
     dfs(g, 'A', parent = parent_reln, found = found_map, finished = finished_ref, edge_f = print_cycle)
