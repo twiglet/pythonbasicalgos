@@ -22,59 +22,62 @@ class Ref:
 ## We store a graph by an adjacency list
 ## Its a dictionary from vertices to a list of arcs, each arc is a tuple of end and weight 
 class Graph:
-    def __init__(self):
+    def __init__(self, directed=True):
         self.vertices = {}
+        self.directed = directed
+        
     def add_edge(self, x, y, w):
         ## Ignore this edge if we already have an edge from x to y
-        if y in [a for (a,_) in self.vertices.get(x, [])]:
+        if y in [a for (a, _) in self.vertices.get(x, [])]:
             return
         ## If first edge to y then create an empty list of edges from x
         if not self.vertices.has_key(x):
             self.vertices[x] = []
 
-        self.vertices[x].append((y,w,))
+        self.vertices[x].append((y, w,))
         
-    def delete_edge(self,x,y):
-        ys = [a for (a,_) in self.vertices[x]]
+    def delete_edge(self, x, y):
+        ys = [a for (a, _) in self.vertices[x]]
         if y in ys:
             del self.vertices[x][ys.index(y)]
 
-    def is_edge(self,x,y):
-        return y in [a for (a,_) in self.vertices[x]]
+    def is_edge(self, x, y):
+        return y in [a for (a, _) in self.vertices[x]]
     
     ## return weight of edge x,y
     ## pre: x,y must exist in graph
-    def edge_weight(self,x,y):
-        return filter( lambda (t,w): t==y,self.vertices[x])[0][1]
+    def edge_weight(self, x, y):
+        return filter(lambda (t, w): t == y, self.vertices[x])[0][1]
+
+    def mk_undirected(self):
+
+        # collect edges to add (back links)
+        new_edges = []
+        # collect edges to replace (existing has forward and back, replace with min weight)
+        replace_edges = {}
+    
+        for (x, es) in self.vertices.iteritems():
+            for (y, w) in es:
+                if self.is_edge(y, x):
+                    # We already have a back edge, replace with min weight
+                    replace_edges[(x, y)] = min(w, self.edge_weight(y, x))
+                else:
+                    new_edges.append((y, x, w))
+        # add new edges to graph
+        for ((x, y), w) in replace_edges.iteritems():
+            self.delete_edge(x, y)
+            self.add_edge(x, y, w)
+        for (x, y, w) in new_edges:
+            self.add_edge(x, y, w)
+        self.directed = False
     
     def __str__(self):
         ret = "{\n"
-        for v,e in self.vertices.iteritems():
+        for v, e in self.vertices.iteritems():
             ret = ret + "  %s: %s\n" % (v, e)
         ret = ret + "}"
         return ret
 
-def mk_undirected(g):
-
-    # collect edges to add (back links)
-    new_edges = []
-    
-    # collect edges to replace (existing has forward and back, replace with min weight)
-    replace_edges = {}
-    
-    for (x,es) in g.vertices.iteritems():
-        for (y,w) in es:
-            if g.is_edge(y,x):
-                # We already have a back edge, replace with min weight
-                replace_edges[(x,y)] = min(w, g.edge_weight(y,x))
-            else:
-                new_edges.append((y,x,w))
-    # add new edges to graph
-    for ((x,y),w) in replace_edges.iteritems():
-        g.delete_edge(x,y)
-        g.add_edge(x,y,w)
-    for (x,y,w) in new_edges:
-        g.add_edge(x,y,w)
 
 def bfs(g,s, parent = None, enter_node_f = None, exit_node_f = None, edge_f = None):
     
@@ -135,7 +138,7 @@ def dfs(g, s, parent = None, found = None, discovered = None, finished = None,
                 if edge_f != None:
                     edge_f(x,y,w)
                 _dfs(y, time, processed, parent)
-            elif not processed.get(y, False) and not parent.get(x, None) == y:
+            elif g.directed or (not processed.get(y, False) and not parent.get(x, None) == y) :
                 # back link
                 if edge_f != None:
                     edge_f(x,y,w)
@@ -189,7 +192,7 @@ if __name__ == '__main__':
     for (x,y,w) in edges:
         if x != y:
             g.add_edge(x,y,w)
-    mk_undirected(g)
+    g.mk_undirected()
     print "Our Graph"
     print g
     
