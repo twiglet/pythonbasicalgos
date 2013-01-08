@@ -166,7 +166,33 @@ def dfs(g, s, parent = None, found = None, discovered = None, finished = None,
     time = Ref(0)
     processed = {}
     _dfs(s, time, processed, parent)
-                
+
+## Famous algorithm to find the shortest path to all other reachable nodes                
+def djikstra(g, s):
+    # Vertices we have processed
+    intree = {}
+    
+    # store distances from s
+    distance = {s : 0}
+    
+    # keep parent path
+    parent = {}
+    
+    # x is the current vertex
+    x = s
+    while not intree.get(x, False):
+        intree[x] = True
+        for (y,w) in g.vertices[x]:
+            if distance.get(y, None) == None or distance[y] > distance[x] + w:
+                distance[y] = distance[x] + w
+                parent[y] = x
+        
+        dist = None        
+        for v in g.vertices.keys():
+            if not intree.get(v, False) and distance.get(v, None) != None and (dist == None or dist > distance[v]):
+                dist = distance[v]
+                x = v
+    return (distance,parent)
                 
 def print_path(parent, start, end):
     if start == end or parent.get(end, None) == None:
@@ -220,3 +246,4 @@ if __name__ == '__main__':
             # finished_ref.apply(lambda _:True)
             
     dfs(g, 'A', parent = parent_reln, found = found_map, finished = finished_ref, edge_f = print_cycle)
+    print djikstra(g, 'A')
